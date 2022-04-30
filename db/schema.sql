@@ -8,7 +8,6 @@ CREATE TABLE employees (
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(30) NOT NULL,
   role_id INT,
-  -- reference to another employee that is the manager of the current employee (`null` if the employee has no manager)
   manager_id INT
 );
 
@@ -21,7 +20,8 @@ CREATE TABLE roles (
 
 CREATE TABLE departments (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(30) NOT NULL
+  department_name VARCHAR(30) NOT NULL
+  
 );
 
 
