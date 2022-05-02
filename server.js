@@ -26,17 +26,11 @@ const db = mysql.createConnection(
 // Routes
 
 // Main Menu Prompt
-function menu(){
-
-}
-
-
-// Prompt Questions
-function init() {
+function mainMenu() {
   inquirer.prompt(
     {
       type: "list",
-      name: "mainmenu",
+      name: "action",
       message: "What would you like to do?",
       choices: [
         "View All Departments",
@@ -47,25 +41,44 @@ function init() {
         "Add an Employee",
         "Updated an Employee Role",
       ],
-    },
-    {
-      // display the departments table
+    }.then((answers) => {
       // when view all departments is selected
-      when: (answers) => answers.mainmenu === "View All Departments",
-    },
+      if (answers.action === "View all Departments") {
+        let query = "SELECT * FROM company_employees.departments";
+        // display the departments table
+        db.query(query, (err, res) => {
+          if (err) throw err;
+          console.table(res);
+          mainMenu();
+        });
+        // when view all roles is selected
+      } else if (answers.action === "View all Roles") {
+        let query = "SELECT * FROM company_employees.roles";
+        // display the roles table
+        db.query(query, (err, res) => {
+          if (err) throw err;
+          console.table(res);
+          mainMenu();
+        });
+        // when view all employees is selected
+      } else if (answers.action === "View all Employees") {
+        let query = "SELECT * FROM company_employees.employees";
+        // display the employees table
+        db.query(query, (err, res) => {
+          if (err) throw err;
+          console.table(res);
+          mainMenu();
+        });
+      }
+    })
+  );
+}
 
-    {
-      // display the roles table
-      // when view all roles is selected
-      when: (answers) => answers.mainmenu === "View All Roles",
-    },
+function actions () {};
 
-    {
-      // display the employee_data table
-      // when view all employees is selected
-      when: (answers) => answers.mainmenu === "View All Employees",
-    },
-
+// Prompt Questions
+function addDepartment() {
+  inquirer.prompt(
     {
       // prompt to enter name of department
       type: "input",
@@ -74,8 +87,15 @@ function init() {
       // when add a department is selected
       when: (answers) => answers.mainmenu === "Add a Department",
       // then add to the database
-    },
+    }.then((answers) => {
+      // then ask mainmenu again
+      mainmenu();
+    })
+  );
+}
 
+function addRole() {
+  inquirer.prompt(
     {
       // prompt to enter role name
       type: "input",
@@ -92,7 +112,7 @@ function init() {
       name: "role_salary",
       message: "What is the salary for the role?",
       // when add a role is selected
-      when: (answers) => answers.mainmenu === "Add a Role"
+      when: (answers) => answers.mainmenu === "Add a Role",
     },
 
     {
@@ -104,8 +124,14 @@ function init() {
       // when add a role is selected
       when: (answers) => answers.mainmenu === "Add a Role",
       // then add to the database
-    },
+    }.then((answers) => {
+      mainmenu();
+    })
+  );
+}
 
+function addEmployee() {
+  inquirer.prompt(
     {
       // prompt to enter employee first_name, last_name, role, and manager
       type: "input",
@@ -153,8 +179,12 @@ function init() {
       // when add an employee is selected
       when: (answers) => answers.mainmenu === "Add an employee",
       // then add employee to database
-    },
+    }
+  );
+}
 
+function updateEmployee() {
+  inquirer.prompt(
     {
       // prompt to select an employee to update
       type: "list",
@@ -166,7 +196,7 @@ function init() {
     },
 
     {
-        // prompt to update employee role
+      // prompt to update employee role
       type: "list",
       name: "role_update",
       message: "Which role do you want to assign the selected employee?",
@@ -174,7 +204,6 @@ function init() {
       // when update an employee role is selected
       when: (answers) => answers.mainmenu === "Update an Employee Role",
       // then add updated employee_data in the database
-    }
-    .then((answers) => {})
+    }.then((answers) => {})
   );
 }
