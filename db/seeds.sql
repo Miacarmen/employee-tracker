@@ -27,7 +27,7 @@ VALUES ("Sr Software Engineer", 120000, 1),
 ("Customer Service", 40000, 7);
 
 
-INSERT INTO employee (first_name, last_name, role_id, manager_id)
+INSERT INTO employees (first_name, last_name, role_id, manager_id)
 VALUES 
 ("Louis", "Bloom", 1, null),
 ("Robert", "Graysmith", 2, 1),
