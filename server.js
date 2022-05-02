@@ -120,7 +120,7 @@ function addRole() {
       type: "list",
       name: "role_dept",
       message: "What department does the role belong to?",
-      choices: [Engineering, Finance, Legal, Sales, Service],
+      choices: [Engineering, Finance, Legal, Operations, Management, Marketing, Sales, Service],
       // when add a role is selected
       when: (answers) => answers.mainmenu === "Add a Role",
       // then add to the database
@@ -156,15 +156,20 @@ function addEmployee() {
       name: "emp_role",
       message: "What is the employee's role?",
       choices: [
-        "Sales Lead",
-        "Salesperson",
-        "Lead Engineer",
-        "Software Engineer",
-        "Account Manager",
+        "Sr Software Engineer",
+        "Jr Software Engineer",
+        "Cybersecurity",
+        "Accounts Manager",
         "Accountant",
         "Legal Team Lead",
         "Lawyer",
-        "Customer Service",
+        "HR",
+        "Operations Manager",
+        "Marketing Director",
+        "Brand Manager",
+        "Sales Lead",
+        "Sales Consultant",
+        "Customer Service"
       ],
       // when add an employee is selected
       when: (answers) => answers.mainmenu === "Add an employee",
