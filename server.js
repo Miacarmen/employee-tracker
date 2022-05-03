@@ -2,34 +2,29 @@
 const mysql = require("mysql2");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
-const express = require("express");
-const PORT = process.env.PORT || 3001;
+require("dotenv").config();
 
-// Middleware
-const app = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.use(express.static("public"));
-
+// establishing connection parameters
 const db = mysql.createConnection(
   {
     host: "localhost",
-    user: "root",
-    password: "password",
-    database: "employee_db",
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
   },
   console.log("Connected to the employee database")
 );
 
+// connect to db and initialize main menu
 db.connect(function (err) {
   if (err) throw err;
   mainMenu();
 });
 
 // Main Menu Prompt
+
 function mainMenu() {
+  console.log("Welcome!");
   inquirer
     .prompt({
       type: "list",
@@ -69,13 +64,20 @@ function mainMenu() {
         case "Update an Employee Role":
           updateEmployee();
           break;
+        default:
+          // "else"
+          db.end();
+          break;
       }
     });
 }
 
+// Prompt Questions
+
+// when view all departments in selected
 function viewDepts() {
   console.log("Viewing all departments");
-  let query = "SELECT * FROM company_db.departments";
+  let query = "SELECT * FROM departments";
 
   db.query(query, (err, res) => {
     if (err) {
@@ -87,76 +89,92 @@ function viewDepts() {
   });
 }
 
-// Prompt Questions
+// when add a department is selected
 function addDept() {
-  inquirer.prompt(
-    {
+  inquirer
+    .prompt({
       type: "input",
-      name: "dept_name",
+      name: "department_name",
       message: "What is the name of the department?",
-    }.then((answers) => {
-      // then ask mainmenu again
-      mainmenu();
     })
-  );
+    .then((answers) => {
+      console.log(answers);
+      let query = "INSERT INTO departments SET ?";
+
+      db.query(query, answers, (err, res) => {
+        if (err) throw err;
+        console.log(res);
+        console.log("Department was added to table");
+        mainMenu();
+      });
+    });
 }
 
+// when view all roles is selected
 function viewRoles() {
   console.log("Viewing all roles");
   let query =
-    "SELECT roles.id, roles.title, roles.salary, department.name AS department FROM company_db.roles";
+    "SELECT roles.id, roles.title, roles.salary, departments.department_name AS department FROM roles LEFT JOIN departments ON roles.department_id = departments.id";
   // query to display roles table
   db.query(query, (err, res) => {
     if (err) throw err;
     console.table(res);
+    // then ask mainmenu again
+    mainMenu();
   });
-  mainMenu();
 }
 
+// when add a role is selected
 function addRole() {
-  inquirer
-    .prompt(
-      {
-        // prompt to enter role title
-        type: "input",
-        name: "role_name",
-        message: "What is the name of the role?",
-        // then add to the database
-      },
+  // query database to get accurate current information
+  let query = "SELECT * FROM departments";
+  db.query(query, (err, res) => {
+    if (err) throw err;
+    console.log(res);
+    let departmentArr = res.map((dpt) => ({
+      name: dpt.department_name,
+      value: dpt.id,
+    }));
+    console.log(departmentArr);
 
-      {
-        // prompt to enter role salary
-        type: "input",
-        name: "role_salary",
-        message: "What is the salary for the role?",
-      },
-
-      {
-        // prompt to enter role department
-        type: "list",
-        name: "role_dept",
-        message: "What department does the role belong to?",
-        choices: [
-          Engineering,
-          Finance,
-          Legal,
-          Operations,
-          Management,
-          Marketing,
-          Sales,
-          Service,
-        ],
-      }
-    )
-    .then((answers) => {
-      mainmenu();
-    });
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          name: "title",
+          message: "What is the name of the role?",
+        },
+        {
+          type: "number",
+          name: "salary",
+          message: "What is the salary for the role?",
+        },
+        {
+          type: "list",
+          name: "department_id",
+          message: "What department does the role belong to?",
+          choices: departmentArr,
+        },
+      ])
+      .then((answers) => {
+        console.log(answers);
+        let query = "INSERT INTO roles SET ?";
+        // answers replaces the escape ?
+        db.query(query, answers, (err, res) => {
+          if (err) throw err;
+          console.log(res);
+          console.log("Successfully added role");
+          mainMenu();
+        });
+      });
+  });
 }
 
+// when view all employees is selected
 function viewEmployees() {
   console.log("Viewing all employees");
   let query =
-    "SELECT employees.id, employees.first_name, employees.last_name, roles.title, department_name AS department, roles.salary";
+    "SELECT employees.id, employees.first_name, employees.last_name, roles.title, departments.department_name AS department, roles.salary FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id;";
   db.query(query, (err, res) => {
     if (err) throw err;
     console.table(res);
@@ -172,13 +190,11 @@ function addEmployee() {
       name: "emp_firstname",
       message: "What is the employee's first name?",
     },
-
     {
       type: "input",
       name: "emp_lastname",
       message: "What is the employee's last name?",
     },
-
     {
       type: "list",
       name: "emp_role",
@@ -200,12 +216,11 @@ function addEmployee() {
         "Customer Service",
       ],
     },
-
     {
       type: "list",
       name: "emp_manager",
       message: "Who is the employee's manager?",
-      choices: ["None"],
+      choices: ["None", ""],
       // then add employee to database
     }
   );
@@ -213,19 +228,23 @@ function addEmployee() {
 
 // when update an employee role is selected
 function updateEmployee() {
-  inquirer.prompt(
-    {
-      type: "list",
-      name: "update",
-      message: "Which employee's role do you want to update?",
-      choices: [],
-    },
-    {
-      type: "list",
-      name: "role_update",
-      message: "Which role do you want to assign the selected employee?",
-      choices: [],
-      // then add updated employee_data in the database
-    }.then((answers) => {})
-  );
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "update",
+        message: "Which employee's role do you want to update?",
+        choices: [],
+      },
+      {
+        type: "list",
+        name: "role_update",
+        message: "Which role do you want to assign the selected employee?",
+        choices: [],
+        // then add updated employee's data in the database
+      },
+    ])
+    .then((answers) => {
+
+    });
 }
